@@ -1,25 +1,30 @@
-module project where
+module Project where
 
-data Bool : Set where
-  true  : Bool
-  false : Bool
+open import Data.Nat using (ℕ)
 
-not : Bool → Bool
-not true = false
-not false = true
+data Formula : Set where
+  Var : ℕ → Formula
+  Neg : Formula → Formula
+  And : Formula → Formula → Formula
+  Or  : Formula → Formula → Formula
 
-_∧_ : Bool → Bool → Bool
-true ∧ b = b
-false ∧ b = false
+data Literal : Set where
+  Pos : ℕ → Literal
+  NegLit : ℕ → Literal
 
-_∨_ : Bool → Bool → Bool
-true ∨ b = true
-false ∨ b = b
+data NNF : Set where
+  Lit : Literal → NNF
+  AndN : NNF → NNF → NNF
+  OrN  : NNF → NNF → NNF
 
-data Maybe (A : Set) : Set where
-  just : A → Maybe A
-  nothing : Maybe A
+negNNF : NNF → NNF
+negNNF (Lit (Pos n))    = Lit (NegLit n)
+negNNF (Lit (NegLit n)) = Lit (Pos n)
+negNNF (AndN p q)       = OrN  (negNNF p) (negNNF q)
+negNNF (OrN  p q)       = AndN (negNNF p) (negNNF q)
 
-data ℕ : Set where
-  zero : ℕ
-  suc  : ℕ → ℕ
+to-nnf : Formula → NNF
+to-nnf (Var n)      = Lit (Pos n)
+to-nnf (Neg f)      = negNNF (to-nnf f)
+to-nnf (And f g)    = AndN (to-nnf f) (to-nnf g)
+to-nnf (Or f g)     = OrN  (to-nnf f) (to-nnf g)
